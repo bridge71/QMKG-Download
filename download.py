@@ -20,7 +20,7 @@ param = {
 }
 head = {
     'Host': 'node.kg.qq.com',
-    'Cookie': '', # 换成你自己的
+    'Cookie': '', # 换成你自己的  comment: 好像没影响？
     'Sec-Ch-Ua': '"Chromium";v="111", "Not(A:Brand";v="8"',
     'Accept': 'application/json, text/plain, */*',
     'Sec-Ch-Ua-Mobile': '?1',
@@ -109,7 +109,7 @@ for i in range(len(songlist)):
     base_url="https://node.kg.qq.com/play?s="
     url_first=base_url+str(songlist[i][0])
     print(f"{i + 1}:\t", end='')
-    print(f"{songlist[i][1]}\t:{songlist[i][0]}")
+    print(f"{songlist[i][1]}".replace("/", "_") + f"\t:{songlist[i][0]}")
     response = requests.get(url_first)
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -124,12 +124,14 @@ for i in range(len(songlist)):
             music_url = content[3:-3]
             break
             
-    mypath = f"./music/{songlist[i][1]}.m4a"
+    pre = "./music/"
+    mypath = pre + f"{songlist[i][1]}.m4a".replace("/", "_")
     is_exists = os.path.exists(mypath)
 
     if is_exists:  #假设最多两个同名歌曲
         size1 = os.path.getsize(mypath)
-        mypath2 = f"./music/{songlist[i][1]}-2.m4a"
+        mypath2 = pre + f"{songlist[i][1]}-2.m4a".replace("/", "_")
+
         if music_url:
             download_music(music_url, mypath2, size1)
         else:

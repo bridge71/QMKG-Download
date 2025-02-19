@@ -29,6 +29,7 @@
    ```
 
    接着F12查看浏览器发送的包按照相同格式伪造即可
+
 3. 填入相关参数：
 
 ```
@@ -46,7 +47,7 @@
  }
  head = {
      'Host': 'node.kg.qq.com',
-     'Cookie': '', # 换成你自己的
+     'Cookie': '', # 换成你自己的 comment:好像没影响
      'Sec-Ch-Ua': '"Chromium";v="111", "Not(A:Brand";v="8"',
      'Accept': 'application/json, text/plain, */*',
      'Sec-Ch-Ua-Mobile': '?1',
