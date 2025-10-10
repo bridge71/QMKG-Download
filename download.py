@@ -1,5 +1,6 @@
 import requests
 import re
+import os
 from bs4 import BeautifulSoup
 
 num = 1
@@ -8,7 +9,7 @@ url = 'https://node.kg.qq.com/fcgi-bin/kg_ugc_get_homepage'
 param = {
     'outCharset': 'utf-8',
     'from': '1',
-    'nocache': '', # 换成你自己的
+    # 'nocache': '', # 换成你自己的 comment: 注释了，好像没影响
     'format': 'json',
     'type': 'get_uinfo',
     'start': str(num),
@@ -19,7 +20,7 @@ param = {
 }
 head = {
     'Host': 'node.kg.qq.com',
-    'Cookie': '', # 换成你自己的
+    'Cookie': '', # 换成你自己的  comment: 好像没影响？
     'Sec-Ch-Ua': '"Chromium";v="111", "Not(A:Brand";v="8"',
     'Accept': 'application/json, text/plain, */*',
     'Sec-Ch-Ua-Mobile': '?1',
@@ -29,7 +30,7 @@ head = {
     'Sec-Fetch-Site': 'same-site',
     'Sec-Fetch-Mode': 'cors',
     'Sec-Fetch-Dest': 'empty',
-    'Referer': '', # 换成你自己的
+    'Referer': 'https://www.baidu.com', # 换成你自己的 comment: 好像有就行？ 
     'Accept-Encoding': 'gzip, deflate',
     'Accept-Language': 'zh-CN,zh;q=0.9'
 }
@@ -51,18 +52,8 @@ print("用户名为：",username)
 print("用户作品：",total)
 def findsongs(i):
     global songlist
-    param = {
-        'outCharset': 'utf-8',
-        'from': '1',
-        'nocache': '', # 换成你自己的
-        'format': 'json',
-        'type': 'get_uinfo',
-        'start': str(i),
-        'num': '15',
-        'share_uid': '', # 换成你要找的那个歌手的
-        'g_tk': '5381',
-        'g_tk_openkey': '5381'
-    }
+
+    param['start'] = str(i)
     resp=requests.get(url,params=param,headers=head)
     obj1=re.compile(r'.*?"nickname": (?P<nickname>.*?),'
                 r'.*?"ugc_total_count": (?P<total>.*?),',re.S)
@@ -78,7 +69,9 @@ def findsongs(i):
 for i in range(total//15 + 1):
     findsongs(i + 1)
 
-# print(songlist)
+# print(len(songlist))
+# for item in songlist:
+#     print(item)
 
 def extract_content_between_strings(text, start_string, end_string):
     pattern = re.escape(start_string) + r"(.*?)" + re.escape(end_string)
@@ -89,21 +82,34 @@ def extract_content_between_strings(text, start_string, end_string):
     else:
         return None
     
-def download_music(url, save_path):
+def download_music(url, save_path, siz):
     response = requests.get(url, stream=True)
     if response.status_code == 200:
-        with open(save_path, 'wb') as file:
-            for chunk in response.iter_content(chunk_size=128):
-                file.write(chunk)
-        print("Download complete!")
+
+        file_size = response.headers.get('Content-Length')
+
+        if file_size is not None:
+            print(f"文件大小: {file_size} 字节")
+        else:
+            print("无法确定文件大小")
+
+        # print(siz, "  ", file_size)
+        # print(type(siz))
+        # print(type(file_size))
+
+        if str(siz) != file_size:
+            with open(save_path, 'wb') as file:
+                for chunk in response.iter_content(chunk_size=128):
+                    file.write(chunk)
+            print("Download complete!")
     else:
         print("Failed to download music.")
 
 for i in range(len(songlist)):
     base_url="https://node.kg.qq.com/play?s="
     url_first=base_url+str(songlist[i][0])
-    print(f"{i}:\t", end='')
-    print(f"{songlist[i][1]}\t:{songlist[i][0]}")
+    print(f"{i + 1}:\t", end='')
+    print(f"{songlist[i][1]}".replace("/", "_") + f"\t:{songlist[i][0]}")
     response = requests.get(url_first)
 
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -118,8 +124,11 @@ for i in range(len(songlist)):
             music_url = content[3:-3]
             break
             
-    mypath = f"./music/{i}-{songlist[i][1]}.m4a"
+    pre = "./music/"+str(i)+"-"
+    mypath = pre + f"{songlist[i][1]}.m4a".replace("/", "_")
+    is_exists = os.path.exists(mypath)
+
     if music_url:
-        download_music(music_url, mypath)
+        download_music(music_url, mypath, 0)
     else:
         print(f"{songlist[i][1]}.m4a downlown failed!")
